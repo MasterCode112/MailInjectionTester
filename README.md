@@ -1,4 +1,4 @@
-# EmailPayloadForge
+# MailInjectionTester
 
 > Email injection & parameter pollution payload generator for bug bounty and authorized penetration testing.
 
@@ -108,16 +108,5 @@ python3 email_payload_forge.py -o victim@target.com -a attacker@gmail.com -e pay
 | Response length change | Different code path triggered |
 | Duplicate email in logs | Both addresses received notification |
 
----
-
-## Project name
-
-**EmailPayloadForge** — `github.com/yourhandle/EmailPayloadForge`
-
-Alternative names: `MailInjectionTester`, `HeaderSmith`, `MailBreaker`
-
----
-
 ## License
-
 MIT — for authorized security research only.
