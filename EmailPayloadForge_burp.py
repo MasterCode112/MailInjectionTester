@@ -1,8 +1,9 @@
-# EmailPayloadForge — Burp Suite Extension (Jython)
+# -*- coding: utf-8 -*-
+# EmailPayloadForge - Burp Suite Extension (Jython)
 # Load via Extender > Extensions > Add > Python
 # Requires Jython standalone JAR configured in Extender > Options
 #
-# AUTHORIZED TESTING ONLY — bug bounty programs and systems you own.
+# AUTHORIZED TESTING ONLY - bug bounty programs and systems you own.
 
 from burp import IBurpExtender, ITab, IHttpListener, IContextMenuFactory
 from javax.swing import (JPanel, JTextField, JButton, JLabel, JScrollPane,
@@ -58,9 +59,9 @@ class BurpExtender(IBurpExtender, ITab, IContextMenuFactory):
         self._results = []
         self._build_ui()
         callbacks.addSuiteTab(self)
-        print("[EmailPayloadForge] Loaded — authorized testing only")
+        print("[EmailPayloadForge] Loaded - authorized testing only")
 
-    # ── UI ────────────────────────────────────────────────────────────────────
+    # -- UI ---
     def _build_ui(self):
         self._panel = JPanel(BorderLayout(10, 10))
         self._panel.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12))
@@ -116,11 +117,11 @@ class BurpExtender(IBurpExtender, ITab, IContextMenuFactory):
         self._panel.add(cfg, BorderLayout.NORTH)
         self._panel.add(split, BorderLayout.CENTER)
 
-    # ── ITab ──────────────────────────────────────────────────────────────────
+    # -- ITab ---
     def getTabCaption(self):  return "EmailPayloadForge"
     def getUiComponent(self): return self._panel
 
-    # ── Context menu ──────────────────────────────────────────────────────────
+    # -- Context menu ---
     def createMenuItems(self, invocation):
         items = ArrayList()
         item = JMenuItem("Send to EmailPayloadForge",
@@ -135,7 +136,7 @@ class BurpExtender(IBurpExtender, ITab, IContextMenuFactory):
         self._pending_msg = msgs[0]
         self._log_line("[*] Request loaded from Proxy/Repeater. Set param name and click Generate.")
 
-    # ── Generate ──────────────────────────────────────────────────────────────
+    # -- Generate ---
     def _on_generate(self, event):
         orig    = self._orig_field.getText().strip()
         attacker = self._atk_field.getText().strip()
@@ -147,17 +148,17 @@ class BurpExtender(IBurpExtender, ITab, IContextMenuFactory):
         self._table_model.setRowCount(0)
         for i, (cat, pld) in enumerate(payloads, 1):
             self._table_model.addRow([i, cat, pld, "-", "-", "-"])
-        self._log_line(f"[+] Generated {len(payloads)} payloads. "
-                       "Right-click a Proxy request and 'Send to EmailPayloadForge', "
-                       "then use Intruder with the exported list, or call send_all().")
+        self._log_line("[+] Generated {0} payloads. Right-click a Proxy request and "
+                       "'Send to EmailPayloadForge', then use Intruder with the exported "
+                       "list, or call send_all().".format(len(payloads)))
 
-    # ── Send all via Intruder (helper) ────────────────────────────────────────
+    # -- Send all via Intruder (helper) ---
     def send_all(self):
         """
         Call this from the Python console to fire all payloads against
         a previously loaded request (via context menu).
         Results update the table automatically.
-        """
+        """  
         if not hasattr(self, '_pending_msg'):
             self._log_line("[-] No request loaded. Right-click a request first.")
             return
@@ -170,7 +171,7 @@ class BurpExtender(IBurpExtender, ITab, IContextMenuFactory):
         base_req = self._pending_msg.getRequest()
         http_svc = self._pending_msg.getHttpService()
 
-        self._log_line(f"[*] Sending {len(payloads)} requests (param={param}) ...")
+        self._log_line("[*] Sending {0} requests (param={1}) ...".format(len(payloads), param))
 
         for i, (cat, pld) in enumerate(payloads):
             modified = self._inject_param(base_req, param, orig, pld)
@@ -192,13 +193,13 @@ class BurpExtender(IBurpExtender, ITab, IContextMenuFactory):
                 self._table_model.setValueAt(reflected,    i, 5)
 
                 if reflected == "YES":
-                    self._log_line(f"[!] REFLECTED — {cat}: {pld[:60]}")
+                    self._log_line("[!] REFLECTED - {0}: {1}".format(cat, pld[:60]))
             except Exception as ex:
-                self._table_model.setValueAt(f"ERR: {ex}", i, 3)
+                self._table_model.setValueAt("ERR: {0}".format(ex), i, 3)
 
         self._log_line("[+] Done.")
 
-    # ── Helpers ───────────────────────────────────────────────────────────────
+    # -- Helpers ---
     def _inject_param(self, req_bytes, param_name, orig_val, new_val):
         req_str = self._helpers.bytesToString(req_bytes)
         # URL-encoded body param replacement
